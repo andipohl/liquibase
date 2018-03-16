@@ -56,7 +56,7 @@ public class DropAllCommand extends AbstractCommand<CommandResult> {
     }
 
     public DropAllCommand setSchemas(String... schemas) {
-        if (schemas == null || schemas.length == 0 || schemas[0] == null) {
+        if (schemas == null) {
             this.schemas = null;
             return this;
         }
