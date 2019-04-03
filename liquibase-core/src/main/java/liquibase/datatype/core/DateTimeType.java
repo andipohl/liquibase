@@ -6,6 +6,7 @@ import liquibase.database.core.*;
 import liquibase.datatype.DataTypeInfo;
 import liquibase.datatype.DatabaseDataType;
 import liquibase.datatype.LiquibaseDataType;
+import liquibase.exception.DatabaseException;
 import liquibase.logging.LogService;
 import liquibase.logging.LogType;
 import liquibase.statement.DatabaseFunction;
@@ -54,6 +55,12 @@ public class DateTimeType extends LiquibaseDataType {
                     || "[datetime2]".equals(originalDefinition.toLowerCase(Locale.US))
                     || originalDefinition.toLowerCase(Locale.US).matches("(?i)\\[?datetime2\\]?\\s*\\(.+")
                     ) {
+
+                try {
+                    if (database.getDatabaseMajorVersion() <= 9) { //2005 or earlier
+                        return new DatabaseDataType(database.escapeDataTypeName("datetime"));
+                    }
+                } catch (DatabaseException ignore) { } //assuming it is a newer version
 
                 // If the scale for datetime2 is the database default anyway, omit it.
                 if ( (parameters.length >= 1) &&

@@ -387,9 +387,11 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                         returnList.addAll(executeAndExtract(sql, database));
                     } else if (database instanceof MSSQLDatabase) {
                     	String tableCat = "original_db_name()";
+                    	String filterDefinition = "i.filter_definition";
 
                     	if (9 <= database.getDatabaseMajorVersion()) {
                         	tableCat = "db_name()";
+                        	filterDefinition = "null";
                         }
                         //fetch additional index info
                         String sql = "SELECT " +
@@ -405,7 +407,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                                 "case is_descending_key when 0 then 'A' else 'D' end as ASC_OR_DESC, " +
                                 "null as CARDINALITY, " +
                                 "null as PAGES, " +
-                                "i.filter_definition as FILTER_CONDITION, " +
+                                filterDefinition + " as FILTER_CONDITION, " +
                                 "o.type AS INTERNAL_OBJECT_TYPE, " +
                                 "i.*, " +
                                 "c.*, " +

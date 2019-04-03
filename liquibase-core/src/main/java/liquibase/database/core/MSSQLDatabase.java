@@ -32,6 +32,7 @@ public class MSSQLDatabase extends AbstractJdbcDatabase {
     public static final String PRODUCT_NAME = "Microsoft SQL Server";
 
     public static final class MSSQL_SERVER_VERSIONS {
+        public static final int MSSQL2005 = 9;
         public static final int MSSQL2008 = 10;
         public static final int MSSQL2012 = 11;
         public static final int MSSQL2014 = 12;
@@ -175,7 +176,7 @@ public class MSSQLDatabase extends AbstractJdbcDatabase {
         boolean isRealSqlServerConnection = PRODUCT_NAME.equalsIgnoreCase(databaseProductName)
                 || "SQLOLEDB".equalsIgnoreCase(databaseProductName);
 
-        if (isRealSqlServerConnection && (majorVersion < MSSQL_SERVER_VERSIONS.MSSQL2008)) {
+        if (isRealSqlServerConnection && (majorVersion < MSSQL_SERVER_VERSIONS.MSSQL2005)) {
             LogService.getLog(getClass()).warning(
                 LogType.LOG, String.format("Your SQL Server major version (%d) seems to indicate that your " +
                         "software is older than SQL Server 2008. Unfortunately, this is not supported, and this " +
