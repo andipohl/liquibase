@@ -6,6 +6,7 @@ import liquibase.database.core.*;
 import liquibase.datatype.DataTypeInfo;
 import liquibase.datatype.DatabaseDataType;
 import liquibase.datatype.LiquibaseDataType;
+import liquibase.exception.DatabaseException;
 import liquibase.statement.DatabaseFunction;
 import liquibase.util.StringUtils;
 
@@ -27,6 +28,11 @@ public class TimeType  extends LiquibaseDataType {
         }
         if (database instanceof MSSQLDatabase) {
             Object[] parameters = getParameters();
+            try {
+                if (database.getDatabaseMajorVersion() <= 9) {
+                    return new DatabaseDataType(database.escapeDataTypeName("datetime"));
+                }
+            } catch (DatabaseException ignore) { } //assuming it is a newer version
 
             // If the scale for time is the database default anyway, omit it.
             if ( (parameters.length >= 1) &&

@@ -6,6 +6,7 @@ import liquibase.database.core.*;
 import liquibase.datatype.DataTypeInfo;
 import liquibase.datatype.DatabaseDataType;
 import liquibase.datatype.LiquibaseDataType;
+import liquibase.exception.DatabaseException;
 import liquibase.statement.DatabaseFunction;
 
 import java.text.DateFormat;
@@ -18,6 +19,12 @@ public class DateType extends LiquibaseDataType {
     @Override
     public DatabaseDataType toDatabaseDataType(Database database) {
         if (database instanceof MSSQLDatabase) {
+            try {
+                if (database.getDatabaseMajorVersion() <= 9) { //2005 or earlier
+                    return new DatabaseDataType(database.escapeDataTypeName("datetime"));
+                }
+            } catch (DatabaseException ignore) { } //assuming it is a newer version
+
             return new DatabaseDataType(database.escapeDataTypeName("date"));
         }
         return new DatabaseDataType(getName());
