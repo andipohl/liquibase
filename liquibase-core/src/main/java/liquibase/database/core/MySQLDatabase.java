@@ -5,11 +5,13 @@ import liquibase.database.AbstractJdbcDatabase;
 import liquibase.database.DatabaseConnection;
 import liquibase.database.OfflineConnection;
 import liquibase.database.jvm.JdbcConnection;
+import liquibase.datatype.DataTypeFactory;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.executor.ExecutorService;
 import liquibase.logging.LogService;
 import liquibase.logging.LogType;
+import liquibase.statement.core.AddDefaultValueStatement;
 import liquibase.statement.core.RawSqlStatement;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.core.Index;
@@ -669,4 +671,66 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
         ));
     }
 
+    public String getAddDefaultSQL(AddDefaultValueStatement statement) {
+        String sql;
+
+        if (getConnection() instanceof OfflineConnection) {
+            LogService.getLog(getClass()).info(LogType.LOG, "no real connection. No Column-Metadata available");
+            return null;
+        }
+
+        String metasql =
+                "SELECT CONCAT(" +
+                        //"COLUMN_TYPE, " +
+                        "IF(IS_NULLABLE LIKE 'NO', ' NOT ', ' '),'NULL ', " +
+                        "IF(COLUMN_COMMENT NOT LIKE '', CONCAT('COMMENT \\'',COLUMN_COMMENT,'\\' '), ''), " +
+                        //"IF(COLUMN_DEFAULT IS NOT NULL, CONCAT('DEFAULT ', IF(COLUMN_DEFAULT LIKE 'CURRENT_TIMESTAMP', COLUMN_DEFAULT, CONCAT('\\'',COLUMN_DEFAULT,'\\'')), ' '), ''), "+
+                        "EXTRA " +
+                        ") as SQL_TMP " +
+                        "FROM information_schema.COLUMNS " +
+                        "WHERE TABLE_NAME='" + statement.getTableName() + "' " +
+                        "AND COLUMN_NAME='" + statement.getColumnName() + "' ";
+        if (null != statement.getSchemaName() && statement.getSchemaName().length() > 0) {
+            metasql += "AND TABLE_SCHEMA = '" +  statement.getSchemaName() + "' ";
+        }
+
+        String sqlPart = null;
+        try {
+            sqlPart = ExecutorService.getInstance().getExecutor(this)
+                    .queryForObject(new RawSqlStatement(metasql), String.class);
+        } catch (DatabaseException e) {
+            throw new UnexpectedLiquibaseException("Error getting MySQL/MariaDB metadata for column.", e);
+        }
+
+        sql ="ALTER TABLE "
+                + this.escapeTableName(
+                statement.getCatalogName(),
+                statement.getSchemaName(),
+                statement.getTableName()
+        )
+                + " CHANGE COLUMN "
+                + this.escapeColumnName(
+                statement.getCatalogName(),
+                statement.getSchemaName(),
+                statement.getTableName(),
+                statement.getColumnName()
+        )
+                + " "
+                + this.escapeColumnName(
+                statement.getCatalogName(),
+                statement.getSchemaName(),
+                statement.getTableName(),
+                statement.getColumnName()
+        )
+                + " "
+                + DataTypeFactory.getInstance().fromDescription(
+                statement.getColumnDataType(),
+                this)
+                .toDatabaseDataType(this);
+
+
+        return sql
+                + sqlPart
+                + " DEFAULT " + DataTypeFactory.getInstance().fromObject(statement.getDefaultValue(), this).objectToSql(statement.getDefaultValue(), this);
+    }
 }
