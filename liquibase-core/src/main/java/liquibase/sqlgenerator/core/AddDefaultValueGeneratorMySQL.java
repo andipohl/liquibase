@@ -2,7 +2,6 @@ package liquibase.sqlgenerator.core;
 
 import liquibase.database.Database;
 import liquibase.database.core.MySQLDatabase;
-import liquibase.datatype.DataTypeFactory;
 import liquibase.exception.ValidationErrors;
 import liquibase.util.StringUtils;
 import liquibase.sql.Sql;
@@ -34,9 +33,10 @@ public class AddDefaultValueGeneratorMySQL extends AddDefaultValueGenerator {
 
     @Override
     public Sql[] generateSql(AddDefaultValueStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain) {
-        Object defaultValue = statement.getDefaultValue();
+        String sql = ((MySQLDatabase) database).getAddDefaultSQL(statement);
+
         return new Sql[]{
-                new UnparsedSql("ALTER TABLE " + database.escapeTableName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName()) + " CHANGE COLUMN " + database.escapeColumnName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName(), statement.getColumnName()) + " " + database.escapeColumnName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName(), statement.getColumnName()) + " " + DataTypeFactory.getInstance().fromDescription(statement.getColumnDataType(), database).toDatabaseDataType(database) + " DEFAULT " + DataTypeFactory.getInstance().fromObject(defaultValue, database).objectToSql(defaultValue, database),
+                new UnparsedSql(sql,
                        getAffectedColumn(statement))
         };
     }
