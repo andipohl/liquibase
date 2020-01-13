@@ -684,8 +684,8 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
                 "SELECT CONCAT(" +
                     //"COLUMN_TYPE, " +
                     "IF(IS_NULLABLE LIKE 'NO', ' NOT ', ' '),'NULL ', " +
-                    "IF(COLUMN_COMMENT NOT LIKE '', CONCAT('COMMENT \\'',COLUMN_COMMENT,'\\' '), ''), " +
-                    "IF(COLUMN_DEFAULT IS NOT NULL, CONCAT('DEFAULT ', IF(COLUMN_DEFAULT LIKE 'CURRENT_TIMESTAMP', COLUMN_DEFAULT, CONCAT('\\'',COLUMN_DEFAULT,'\\'')), ' '), ''), "+
+                    "IF(COLUMN_COMMENT NOT LIKE '', CONCAT('COMMENT \\'',REPLACE(COLUMN_COMMENT,'\\'','\\'\\''),'\\' '), ''), " +
+                    "IF(COLUMN_DEFAULT IS NOT NULL, CONCAT('DEFAULT ', IF(COLUMN_DEFAULT LIKE 'CURRENT_TIMESTAMP' OR DATA_TYPE LIKE 'bit', COLUMN_DEFAULT, CONCAT('\\'',COLUMN_DEFAULT,'\\'')), ' '), ''), "+
                     "EXTRA " +
                   ") as SQL_TMP " +
                 "FROM information_schema.COLUMNS " +
