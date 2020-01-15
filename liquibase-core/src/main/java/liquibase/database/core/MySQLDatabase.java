@@ -679,6 +679,8 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
             return null;
         }
 
+        String databaseName = this.getDatabaseName();
+        
         String metasql =
                 "SELECT CONCAT(" +
                         //"COLUMN_TYPE, " +
@@ -689,6 +691,7 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
                         ") as SQL_TMP " +
                         "FROM information_schema.COLUMNS " +
                         "WHERE TABLE_NAME='" + statement.getTableName() + "' " +
+                        "AND TABLE_SCHEMA='" + databaseName + "' " +
                         "AND COLUMN_NAME='" + statement.getColumnName() + "' ";
         if (null != statement.getSchemaName() && statement.getSchemaName().length() > 0) {
             metasql += "AND TABLE_SCHEMA = '" +  statement.getSchemaName() + "' ";
@@ -732,5 +735,21 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
         return sql
                 + sqlPart
                 + " DEFAULT " + DataTypeFactory.getInstance().fromObject(statement.getDefaultValue(), this).objectToSql(statement.getDefaultValue(), this);
+    }
+
+    private String getDatabaseName() {
+        String metasql =
+                "SELECT DATABASE()";
+
+        String databaseName = "";
+
+        try {
+            databaseName = ExecutorService.getInstance().getExecutor(this)
+                    .queryForObject(new RawSqlStatement(metasql), String.class);
+        } catch (DatabaseException e) {
+            throw new UnexpectedLiquibaseException("Error getting MySQL/MariaDB database name.", e);
+        }
+
+        return databaseName;
     }
 }
